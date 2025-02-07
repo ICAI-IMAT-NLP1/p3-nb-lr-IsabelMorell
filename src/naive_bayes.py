@@ -28,10 +28,10 @@ class NaiveBayes:
             labels (torch.Tensor): Labels corresponding to each training example.
             delta (float): Smoothing parameter for Laplace smoothing.
         """
-        # TODO: Estimate class priors and conditional probabilities of the bag of words 
-        self.class_priors = None
-        self.vocab_size = None # Shape of the probability tensors, useful for predictions and conditional probabilities
-        self.conditional_probabilities = None
+        # Estimate class priors and conditional probabilities of the bag of words 
+        self.class_priors = self.estimate_class_priors(labels)
+        self.vocab_size = features.shape[1] # Shape of the probability tensors, useful for predictions and conditional probabilities
+        self.conditional_probabilities = self.estimate_conditional_probabilities(features, labels, delta)
         return
 
     def estimate_class_priors(self, labels: torch.Tensor) -> Dict[int, torch.Tensor]:
@@ -68,20 +68,15 @@ class NaiveBayes:
         Returns:
             Dict[int, torch.Tensor]: Conditional probabilities of each word for each class.
         """
-        # TODO: Estimate conditional probabilities for the words in features and apply smoothing
-        class_word_counts: Dict[int, torch.Tensor] = {}
+        # Estimate conditional probabilities for the words in features and apply smoothing
+        class_word_counts: Dict[int, torch.Tensor] = dict()
+        
+        unique_labels = labels.unique()
 
-        for i in range(len(features)):
-            bow = features[i, :]
-            label = labels[i]
-            
-            if label in class_word_counts.keys():
-                class_word_counts[label] += bow
-            else:
-                class_word_counts[label] = bow
-
-        for keys, values in class_word_counts:
-            class_word_counts[keys] = (values + delta)/(delta*len(values) + values.sum())
+        for label in unique_labels:
+            counts = features[labels == label]
+            smoothed_counts = counts + delta
+            class_word_counts[label.item()] = smoothed_counts/(delta*self.vocab_size + counts.sum())
 
         return class_word_counts
 
@@ -102,8 +97,12 @@ class NaiveBayes:
             raise ValueError(
                 "Model must be trained before estimating class posteriors."
             )
-        # TODO: Calculate posterior based on priors and conditional probabilities of the words
-        log_posteriors: torch.Tensor = None
+        # Calculate posterior based on priors and conditional probabilities of the words
+        log_posteriors: torch.Tensor = torch.zeros(len(self.class_priors))
+
+        for label in self.class_priors.keys():
+            log_conditional = torch.sum(feature*torch.log(self.conditional_probabilities[label]))
+            log_posteriors[label] = torch.log(torch.tensor(self.class_priors[label], dtype=torch.float32)) + log_conditional
         return log_posteriors
 
     def predict(self, feature: torch.Tensor) -> int:
@@ -122,8 +121,8 @@ class NaiveBayes:
         if not self.class_priors or not self.conditional_probabilities:
             raise Exception("Model not trained. Please call the train method first.")
         
-        # TODO: Calculate log posteriors and obtain the class of maximum likelihood 
-        pred: int = None
+        # Calculate log posteriors and obtain the class of maximum likelihood 
+        pred: int = torch.argmax(self.estimate_class_posteriors(feature)).item()
         return pred
 
     def predict_proba(self, feature: torch.Tensor) -> torch.Tensor:
@@ -142,6 +141,6 @@ class NaiveBayes:
         if not self.class_priors or not self.conditional_probabilities:
             raise Exception("Model not trained. Please call the train method first.")
 
-        # TODO: Calculate log posteriors and transform them to probabilities (softmax)
-        probs: torch.Tensor = None
+        # Calculate log posteriors and transform them to probabilities (softmax)
+        probs: torch.Tensor = torch.softmax(self.estimate_class_posteriors(feature), axis=0)
         return probs
