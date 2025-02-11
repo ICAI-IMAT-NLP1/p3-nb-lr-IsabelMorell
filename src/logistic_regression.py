@@ -33,6 +33,22 @@ class LogisticRegression:
             None: The function updates the model weights in place.
         """
         # TODO: Implement gradient-descent algorithm to optimize logistic regression weights
+        dim = len(features[0, :])
+        self.weights = self.initialize_parameters(dim, self.random_state)
+        
+        for epoch in range(epochs):
+            logits = torch.matmul(features, self._weights[:-1]) + self._weights[-1]
+            predictions = torch.sigmoid(logits)
+
+            weight_gradients = torch.matmul((predictions - labels), features)
+            
+            self.weights[:-1] -= learning_rate*weight_gradients/len(labels)
+            self.weights[-1] -= learning_rate*torch.mean(predictions - labels)
+
+            if (epoch + 1) % 50:
+                ce_loss = self.binary_cross_entropy_loss(predictions, labels)
+                print(f"CE Loss at epoch {epoch+1}: {ce_loss}")
+        
         return
 
     def predict(self, features: torch.Tensor, cutoff: float = 0.5) -> torch.Tensor:
@@ -83,9 +99,9 @@ class LogisticRegression:
         Returns:
             torch.Tensor: Initialized weights as a tensor with size (dim + 1,).
         """
-        torch.manual_seed(random_state)
+        generator = torch.manual_seed(random_state)
         
-        params: torch.Tensor = None
+        params: torch.Tensor = torch.randn(dim+1, generator=generator)
         
         return params
 
@@ -103,7 +119,7 @@ class LogisticRegression:
         Returns:
             torch.Tensor: The sigmoid of z.
         """
-        result: torch.Tensor = None
+        result: torch.Tensor = torch.sigmoid(z)
         return result
 
     @staticmethod
@@ -123,7 +139,7 @@ class LogisticRegression:
         Returns:
             torch.Tensor: The computed binary cross-entropy loss.
         """
-        ce_loss: torch.Tensor = None
+        ce_loss: torch.Tensor = -(targets*torch.log(predictions) + (1 - targets)*torch.log(1 - predictions)).sum()/len(predictions)
         return ce_loss
 
     @property
