@@ -101,8 +101,13 @@ class NaiveBayes:
         log_posteriors: torch.Tensor = torch.zeros(len(self.class_priors))
 
         for label in self.class_priors.keys():
-            log_conditional = torch.sum(feature*torch.log(self.conditional_probabilities[label]))
-            log_posteriors[label] = torch.log(torch.tensor(self.class_priors[label], dtype=torch.float32)) + log_conditional
+            log_prior = torch.log(
+                torch.tensor(self.class_priors[label], dtype=torch.float32)
+            )
+            log_conditional = torch.sum(
+                feature*torch.log(self.conditional_probabilities[label])
+            )
+            log_posteriors[label] = log_prior + log_conditional
         return log_posteriors
 
     def predict(self, feature: torch.Tensor) -> int:
