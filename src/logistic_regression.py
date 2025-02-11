@@ -32,7 +32,7 @@ class LogisticRegression:
         Returns:
             None: The function updates the model weights in place.
         """
-        # TODO: Implement gradient-descent algorithm to optimize logistic regression weights
+        # Implement gradient-descent algorithm to optimize logistic regression weights
         dim = len(features[0, :])
         self.weights = self.initialize_parameters(dim, self.random_state)
         
@@ -62,7 +62,8 @@ class LogisticRegression:
         Returns:
             torch.Tensor: Predicted class labels (0 or 1).
         """
-        decisions: torch.Tensor = None
+        probabilities: torch.Tensor = self.sigmoid(features)
+        decisions: torch.Tensor = probabilities > cutoff
         return decisions
 
     def predict_proba(self, features: torch.Tensor) -> torch.Tensor:
@@ -81,7 +82,7 @@ class LogisticRegression:
         if self.weights is None:
             raise ValueError("Model not trained. Call the 'train' method first.")
         
-        probabilities: torch.Tensor = None
+        probabilities: torch.Tensor = self.sigmoid(torch.matmul(features, self._weights[:-1]) + self._weights[-1])
         
         return probabilities
 
