@@ -37,10 +37,7 @@ class LogisticRegression:
         self.weights = self.initialize_parameters(dim, self.random_state)
 
         for epoch in range(epochs):
-            logits: torch.Tensor = (
-                torch.matmul(features, self._weights[:-1]) + self._weights[-1]
-            )
-            predictions: torch.Tensor = torch.sigmoid(logits)
+            predictions: torch.Tensor = self.predict_proba(features)
 
             weight_gradients: torch.Tensor = torch.matmul(
                 (predictions - labels), features
@@ -66,7 +63,7 @@ class LogisticRegression:
         Returns:
             torch.Tensor: Predicted class labels (0 or 1).
         """
-        probabilities: torch.Tensor = self.sigmoid(features)
+        probabilities: torch.Tensor = self.predict_proba(features)
         decisions: torch.Tensor = probabilities > cutoff
         return decisions
 
