@@ -92,13 +92,13 @@ def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> 
     """
     metrics: Dict[str, float] = {}
 
-    positives = (labels == 1)
-    negatives = (labels == 0)
+    positives: torch.Tensor = (labels == 1)
+    negatives: torch.Tensor = (labels == 0)
 
-    tp = (predictions[predictions == 1] == positives[predictions == 1]).sum()
-    fp = (predictions[predictions == 1] != positives[predictions == 1]).sum()
-    tn = (predictions[predictions == 0] == negatives[predictions == 0]).sum()
-    fn = (predictions[predictions == 0] != negatives[predictions == 0]).sum()
+    tp: float = (predictions[predictions == 1] == positives[predictions == 1]).sum()
+    fp: float = (predictions[predictions == 1] != positives[predictions == 1]).sum()
+    tn: float = (predictions[predictions == 0] == negatives[predictions == 0]).sum()
+    fn: float = (predictions[predictions == 0] != negatives[predictions == 0]).sum()
 
     metrics["accuracy"] = (tp + tn)/(tp + tn + fp + fn)
     metrics["precision"] = tp/(tp + fp)
